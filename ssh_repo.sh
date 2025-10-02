@@ -1,12 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-# Minimal GitHub Repo Creator Bot (HTTPS URL only)
+# Minimal GitHub Repo Creator Bot (SSH clone URL output)
 # Requirements: curl, jq, and GITHUB_TOKEN env var set
+# Usage:
+#   export GITHUB_TOKEN=your_token_here
+#   ./create_repo.sh
 
 if [ -z "${GITHUB_TOKEN:-}" ]; then
   echo "❌ Please export your GitHub token first:"
-  echo "   export GITHUB_TOKEN=GITHUB_TOKEN"
+  echo "   export GITHUB_TOKEN=YOUR_GITHUB_TOKEN"
   exit 1
 fi
 
@@ -50,16 +53,15 @@ RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   -d "$POST_DATA" https://api.github.com/user/repos)
 
-# 3) Extract HTTPS URL using jq
-CLONE_URL=$(echo "$RESPONSE" | jq -r '.clone_url // empty')
+# 3) Extract SSH URL using jq
+CLONE_URL=$(echo "$RESPONSE" | jq -r '.ssh_url // empty')
 FULL_NAME=$(echo "$RESPONSE" | jq -r '.full_name // empty')
 ERROR_MSG=$(echo "$RESPONSE" | jq -r '.message // empty')
 
 if [ -n "$CLONE_URL" ]; then
   echo "✅ Repo created: $FULL_NAME"
-  echo "👉 HTTPS URL: $CLONE_URL"
+  echo "👉 SSH URL: $CLONE_URL"
 else
   echo "❌ Failed to create repo."
   echo "GitHub says: $ERROR_MSG"
 fi
-
